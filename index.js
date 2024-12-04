@@ -26,6 +26,26 @@ const client = new MongoClient(uri, {
 
 async function run() {
     try {
+        // ? Database Name declaration for use 
+        const campaignCollection = client.db('campaignDB').collection('campaign');
+        // ? Database Name declaration for use 
+
+
+        // ! add campaign
+        app.post('/addCampaign', async (req, res) => {
+            const newCampaign = req.body;
+            console.log(newCampaign);
+            const result = await campaignCollection.insertOne(newCampaign);
+            res.send(result);
+        })
+
+
+
+
+
+
+
+
 
 
         //    !!! need to delete last   {}___'
