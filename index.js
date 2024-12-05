@@ -31,7 +31,15 @@ async function run() {
         // ? Database Name declaration for use 
 
 
-        // ! add campaign
+        // ! get all campaigns from database
+        app.get('/campaigns', async (req, res) => {
+            const result = await campaignCollection.find({}).toArray();
+            res.send(result);
+        })
+
+
+
+        // ! add campaign to database 
         app.post('/addCampaign', async (req, res) => {
             const newCampaign = req.body;
             console.log(newCampaign);
