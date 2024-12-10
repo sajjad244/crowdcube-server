@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const app = express();
 const port = process.env.PORT || 5000;
@@ -27,33 +27,150 @@ const client = new MongoClient(uri, {
 async function run() {
     try {
         // ? Database Name declaration for use 
+        const donationCollection = client.db('campaignDB').collection('donation');
+        // ! for firebase data
+        const userCollection = client.db('campaignDB').collection('users');
         const campaignCollection = client.db('campaignDB').collection('campaign');
         // ? Database Name declaration for use 
 
 
+
+        // ? receiving data from client {firebase-data} users related apis
+
+        // ! get all users from database
+        app.get('/users', async (req, res) => {
+            const result = await userCollection.find({}).toArray();
+            res.send(result);
+        })
+
+        // ! add campaign to database & receiving data from client
+        app.post('/users', async (req, res) => {
+            const newUser = req.body;
+            const result = await userCollection.insertOne(newUser);
+            res.send(result);
+        })
+
+        app.patch('/users/:email', async (req, res) => {
+            const email = req.params.email;
+            const filter = { email }; // filter by email
+            const updateDoc = {
+                $set: { lastSignInTime: req.body?.lastSignInTime }
+            };
+            const result = await userCollection.updateOne(filter, updateDoc,);
+            res.send(result);
+        })
+
+
+
+        // ? receiving data from client donation related apis
+
+
+        // ! get all donations from database
+        app.get('/donations', async (req, res) => {
+            const result = await donationCollection.find({}).toArray();
+            res.send(result);
+        })
+
+        // ! get all data from email quarry
+
+        app.get('/donations/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const result = await donationCollection.find(query).toArray();
+            res.send(result);
+        })
+
+
+
+        // ! add donation to database & receiving data from client
+        app.post('/donations', async (req, res) => {
+            const newDonation = req.body;
+            const result = await donationCollection.insertOne(newDonation);
+            res.send(result);
+        })
+
+
+        // ////////////////////////////////////////////////////////////////
+        // ////////////////////////////////////////////////////////////////
+
+
+        // ! add campaign to database & receiving data from client
+        app.post('/addCampaign', async (req, res) => {
+            const newCampaign = req.body;
+            const result = await campaignCollection.insertOne(newCampaign);
+            res.send(result);
+        })
+
         // ! get all campaigns from database
-        app.get('/campaigns', async (req, res) => {
+        app.get('/myCampaigns', async (req, res) => {
             const result = await campaignCollection.find({}).toArray();
             res.send(result);
         })
 
-        // ! get single campaign from database
-        // app.get('/campaigns/:id', async (req, res) => {
-        //     const id = req.params.id;
-        //     const query = { _id: new ObjectId(id) };
-        //     const result = await campaignCollection.findOne(query);
-        //     res.send(result);
-        // })
-
-
-
-        // ! add campaign to database 
-        app.post('/addCampaign', async (req, res) => {
-            const newCampaign = req.body;
-            console.log(newCampaign);
-            const result = await campaignCollection.insertOne(newCampaign);
+        // ! get all data from email quarry
+        app.get('/myCampaigns/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const result = await campaignCollection.find(query).toArray();
             res.send(result);
         })
+
+        // ! delete user from database for myCampaigns
+
+        app.delete('/myCampaigns/:id', async (req, res) => {
+            const id = req.params.id;
+
+            const query = { _id: new ObjectId(id) };
+            const result = await campaignCollection.deleteOne(query);
+            res.send(result);
+        })
+
+
+
+        // ! find single data for update
+        app.get('/myCampaigns/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await campaignCollection.findOne(query);
+            res.send(result);
+        })
+
+        app.patch('/myCampaigns/:id', async (req, res) => {
+            const id = req.params.id;
+            const data = req.body;
+            const query = { _id: new ObjectId(id) };
+            const update = {
+                $set: {
+                    title: data?.title,
+                    imageURL: data?.imageURL,
+                    description: data?.description,
+                    type: data?.type,
+                    minDonation: data?.minDonation,
+                    deadline: data?.deadline,
+                },
+            }
+            const result = await campaignCollection.updateOne(query, update);
+            res.send(result);
+        })
+
+        // ! update status
+
+        app.patch('/status/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const update = {
+                $set: {
+                    isCompleted: true,
+                },
+            }
+            const result = await campaignCollection.updateOne(query, update);
+            res.send(result);
+        })
+
+
+        // ////////////////////////////////////////////////////////////////
+        // ////////////////////////////////////////////////////////////////
+
 
 
 
